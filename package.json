@@ -1,0 +1,17 @@
+{
+  "name": "tribus",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite ./src/examples",
+    "build-examples": "vite build ./src/examples"
+  },
+  "dependencies": {
+    "three": "^0.129.0",
+    "tweakpane": "^3.0.2"
+  },
+  "devDependencies": {
+    "vite": "^2.3.5"
+  },
+  "keywords": []
+}
