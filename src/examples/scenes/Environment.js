@@ -4,7 +4,7 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import Environment from "../../components/Environment";
 import Example from "./Example";
 
-import textureFile from "../assets/venice_sunset_1k.hdr?url";
+import envmap from "../assets/venice_sunset_1k.hdr?url";
 
 export default class EnvironmentExample extends Example {
   async start() {
@@ -20,11 +20,9 @@ export default class EnvironmentExample extends Example {
     this.scene.add(this.torus);
 
     this.scene.background = this.defaultBackground = new Color(0.8, 0.8, 0.8);
+
+    this.texture = await new RGBELoader().loadAsync(envmap);
     this.environment = new Environment(this.renderer, this.scene);
-    new RGBELoader().loadAsync(textureFile).then((texture) => {
-      this.texture = texture;
-      this.environment.apply();
-    });
   }
 
   update(delta, elapsed) {

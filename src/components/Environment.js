@@ -11,13 +11,19 @@ import {
 import { PMREMGenerator } from "three";
 
 export default class Environment {
-  constructor(renderer, scene) {
+  constructor(renderer, scene, { texture, equirectangular, cubemap, background } = {}) {
     this.pmremGenerator = new PMREMGenerator(renderer);
     this.renderer = renderer;
     this.scene = scene;
+    this.apply({ texture, equirectangular, cubemap, background });
   }
 
-  async apply({ texture, equirectangular = false, cubemap = false, background = false } = {}) {
+  async apply({
+    texture = null,
+    equirectangular = false,
+    cubemap = false,
+    background = false,
+  } = {}) {
     if (!texture) {
       texture = this.pmremGenerator.fromScene(new DefaultEnvironment()).texture;
     }

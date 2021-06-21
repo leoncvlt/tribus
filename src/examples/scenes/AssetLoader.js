@@ -1,32 +1,19 @@
-import {
-  AmbientLight,
-  BoxGeometry,
-  DirectionalLight,
-  Fog,
-  Mesh,
-  MeshNormalMaterial,
-  MeshPhongMaterial,
-  MeshStandardMaterial,
-  PlaneBufferGeometry,
-  sRGBEncoding,
-} from "three";
+import { Fog, Mesh, MeshStandardMaterial, PlaneBufferGeometry, sRGBEncoding } from "three";
 
 import AssetLoader from "../../components/AssetLoader";
 import Environment from "../../components/Environment";
 import Example from "./Example";
 
-// import tvUrl from "../assets/1980_tv/scene.gltf?url";
-import loeweUrl from "../assets/Loewe_C.glb?url";
+import Loewe_C_url from "../assets/Loewe_C.glb?url";
 import Pferdestatue_C_url from "../assets/Pferdestatue_C.glb?url";
 import Engel_C from "../assets/Engel_C.glb?url";
-import textureFile from "../assets/venice_sunset_1k.hdr?url";
-import { ContactShadows } from "../../components";
 
-const assetLoader = new AssetLoader();
-assetLoader.queue({ url: loeweUrl, key: "tv-model", type: assetLoader.TYPES.GLTF });
-assetLoader.queue({ url: Pferdestatue_C_url, key: "statueB", type: assetLoader.TYPES.GLTF });
-assetLoader.queue({ url: Engel_C, key: "Engel_C", type: assetLoader.TYPES.GLTF });
-assetLoader.queue({ url: textureFile, key: "envmap", type: assetLoader.TYPES.HDRI });
+import envmap from "../assets/venice_sunset_1k.hdr?url";
+
+AssetLoader.queue(Loewe_C_url, "Loewe_C", AssetLoader.TYPES.GLTF);
+AssetLoader.queue(Pferdestatue_C_url, "Pferdestatue_C", AssetLoader.TYPES.GLTF);
+AssetLoader.queue(Engel_C, "Engel_C", AssetLoader.TYPES.GLTF);
+AssetLoader.queue(envmap, "envmap", AssetLoader.TYPES.HDRI);
 
 export default class AssetLoaderExample extends Example {
   async start() {
@@ -62,28 +49,33 @@ export default class AssetLoaderExample extends Example {
     loadingScreen.append(loadingText);
     document.body.prepend(loadingScreen);
 
-    assetLoader.addEventListener("progress", ({ current, total }) => {
+    AssetLoader.addEventListener("progress", ({ current, total }) => {
       const percentage = ((current / total) * 100).toFixed(0).padStart(3, "0");
       loadingText.innerHTML = `${percentage}<br>(${current}/${total})`;
     });
 
-    await assetLoader.load();
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    AssetLoader.addEventListener("loaded", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      loadingScreen.style.opacity = 0;
+    });
 
-    loadingScreen.style.opacity = 0;
+    await AssetLoader.load();
 
-    const envmap = assetLoader.get("envmap");
-    const environment = new Environment(this.renderer, this.scene);
-    environment.apply({ texture: envmap, equirectangular: true, background: false });
+    const envmap = AssetLoader.get("envmap");
+    new Environment(this.renderer, this.scene, {
+      texture: envmap,
+      equirectangular: true,
+      background: false,
+    });
 
-    const tv = assetLoader.get("tv-model");
-    this.scene.add(tv.scene);
+    const statueA = AssetLoader.get("Loewe_C");
+    this.scene.add(statueA.scene);
 
-    const statueB = assetLoader.get("statueB");
+    const statueB = AssetLoader.get("Pferdestatue_C");
     statueB.scene.position.set(0, 0, 8);
     this.scene.add(statueB.scene);
 
-    const statueEngel_C = assetLoader.get("Engel_C");
+    const statueEngel_C = AssetLoader.get("Engel_C");
     statueEngel_C.scene.position.set(0, 0, -8);
     this.scene.add(statueEngel_C.scene);
 

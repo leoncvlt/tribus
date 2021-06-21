@@ -2,7 +2,7 @@ import { EventDispatcher, FileLoader, TextureLoader } from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
-export default class AssetLoader extends EventDispatcher {
+export class AssetLoader extends EventDispatcher {
   constructor() {
     super();
     this._queue = [];
@@ -33,16 +33,12 @@ export default class AssetLoader extends EventDispatcher {
     this._renderer = renderer;
   }
 
-  queue({ url, key, type }) {
+  queue(url, key, type) {
     this._queue.push({
       url: url,
-      key: key || url,
+      key: key || url.split("\\").pop().split("/").pop().split(".").pop(),
       type: type || this.TYPES.File,
     });
-  }
-
-  preprocess({ url, key, type }) {
-    return { url, key, type };
   }
 
   async process({ url, key, type }) {
@@ -99,7 +95,6 @@ export default class AssetLoader extends EventDispatcher {
   async load() {
     await Promise.all(
       this._queue.map(async (asset) => {
-        asset = this.preprocess(asset);
         await this.process(asset);
         console.debug("AssetStore.load(): " + asset.key);
         this.dispatchEvent({
@@ -109,16 +104,15 @@ export default class AssetLoader extends EventDispatcher {
         });
       })
     );
+    this.dispatchEvent({ type: "loaded" });
     this._queue = [];
   }
 
   get(key) {
-    const asset = this.preprocess({ key });
-    if (this.has(asset.key)) {
-      return this._store[asset.key];
+    if (this.has(key)) {
+      return this._store[key];
     } else {
-      console.warn(`AssetStore.get() : asset with key ${key} not found in loaded assets`);
-      return asset;
+      throw(`AssetStore.get() : asset with key ${key} not found in loaded assets`);
     }
   }
 
@@ -126,3 +120,6 @@ export default class AssetLoader extends EventDispatcher {
     return key in this._store;
   }
 }
+
+// export a default AssetLoader object in the global scope
+export default new AssetLoader();
