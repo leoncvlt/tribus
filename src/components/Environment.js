@@ -13,13 +13,11 @@ import { PMREMGenerator } from "three";
 export default class Environment {
   constructor(renderer, scene) {
     this.pmremGenerator = new PMREMGenerator(renderer);
-    this.pmremGenerator.compileEquirectangularShader();
-
     this.renderer = renderer;
     this.scene = scene;
   }
 
-  async apply({ texture, background = false, equirectangular = false } = {}) {
+  async apply({ texture, equirectangular = false, cubemap = false, background = false } = {}) {
     if (!texture) {
       texture = this.pmremGenerator.fromScene(new DefaultEnvironment()).texture;
     }
@@ -28,8 +26,10 @@ export default class Environment {
       this.renderer.initTexture(texture);
     }
     if (equirectangular) {
-      const hdrCubeRenderTarget = this.pmremGenerator.fromEquirectangular(texture);
-      texture = hdrCubeRenderTarget.texture;
+      texture = this.pmremGenerator.fromEquirectangular(texture).texture;
+    }
+    if (cubemap) {
+      texture = this.pmremGenerator.fromCubemap(texture).texture;
     }
     this.scene.environment = texture;
     background && (this.scene.background = texture);

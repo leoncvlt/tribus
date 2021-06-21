@@ -1,13 +1,15 @@
 import { Color, Mesh, MeshStandardMaterial, TorusGeometry } from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
-import Environment from "../../components/Environment";
 
+import Environment from "../../components/Environment";
 import Example from "./Example";
+
 import textureFile from "../assets/venice_sunset_1k.hdr?url";
 
 export default class EnvironmentExample extends Example {
   async start() {
     this.camera.position.z = 10;
+
     this.torus = new Mesh(
       new TorusGeometry(1, 0.5, 16, 32),
       new MeshStandardMaterial({
@@ -32,6 +34,7 @@ export default class EnvironmentExample extends Example {
   get parameters() {
     return {
       texture: {
+        label: "Use texture",
         value: this.scene.environment === this.texture,
         onChange: (value) => {
           this.environment.apply({
@@ -42,6 +45,7 @@ export default class EnvironmentExample extends Example {
         },
       },
       background: {
+        label: "Set background",
         value: !(this.scene.background instanceof Color),
         onChange: (value) =>
           (this.scene.background = value ? this.scene.environment : this.defaultBackground),

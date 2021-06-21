@@ -9,7 +9,8 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   Plane,
-  RGBFormat,
+  PlaneBufferGeometry,
+  RGBAFormat,
   Scene,
   ShaderMaterial,
   UniformsUtils,
@@ -25,7 +26,6 @@ import { VerticalBlurShader } from "three/examples/jsm/shaders/VerticalBlurShade
 
 export default class BlurredReflector extends Mesh {
   set opacity(value) {
-    this.material.transparent = value < 1;
     this.material.uniforms["opacity"].value = value;
   }
 
@@ -33,30 +33,36 @@ export default class BlurredReflector extends Mesh {
     return this.material.uniforms["opacity"].value;
   }
 
-  constructor(
+  constructor({
     geometry,
-    {
-      color = 0xffffff,
-      tint = 0x7f7f7f,
-      textureWidth = 512,
-      textureHeight = 512,
-      clipBias = 0,
-      opacity = 1.0,
-      blur = 0.0,
-      fastBlur = false,
-      excluded = [],
-    } = {}
-  ) {
-    super(geometry);
+    width = 32,
+    height = 32,
+    textureWidth = 512,
+    textureHeight = 512,
+    color = 0xffffff,
+    clipBias = 0,
+    opacity = 1.0,
+    blur = 0.0,
+    fastBlur = false,
+    manualRender = false,
+    excluded = [],
+  } = {}) {
+    if (!geometry) {
+      super(new PlaneBufferGeometry(width, height));
+      this.rotation.x = -Math.PI / 2;
+    } else {
+      super(geometry);
+    }
 
     this.type = "Reflector";
+    
+    this.textureWidth = textureWidth;
+    this.textureHeight = textureHeight;
     this.excluded = excluded;
     this.blur = blur;
     this.fastBlur = fastBlur;
-
-    color = new Color(color);
-    tint = new Color(tint);
-    this.clipBias = clipBias || 0;
+    this.clipBias = clipBias;
+    this.manualRender = manualRender;
 
     this.reflectorPlane = new Plane();
     this.normal = new Vector3();
@@ -76,7 +82,7 @@ export default class BlurredReflector extends Mesh {
     this.renderTarget = new WebGLRenderTarget(textureWidth, textureHeight, {
       minFilter: LinearFilter,
       magFilter: LinearFilter,
-      format: RGBFormat,
+      format: RGBAFormat,
     });
 
     if (!MathUtils.isPowerOfTwo(textureWidth) || !MathUtils.isPowerOfTwo(textureHeight)) {
@@ -86,7 +92,7 @@ export default class BlurredReflector extends Mesh {
     this.renderTargetBlur = this.renderTarget.clone();
     this.renderTargetBlur.texture.generateMipmaps = false;
 
-    // reflector materil
+    // reflector material
     const shader = BlurredReflectorShader;
     const material = new ShaderMaterial({
       uniforms: UniformsUtils.clone(shader.uniforms),
@@ -95,12 +101,13 @@ export default class BlurredReflector extends Mesh {
     });
     this.material = material;
 
-    this.material.uniforms["tDiffuse"].value = this.renderTarget.texture;
-    this.material.uniforms["color"].value = color;
-    this.material.uniforms["tint"].value = tint;
     this.material.uniforms["textureMatrix"].value = this.textureMatrix;
+    this.material.uniforms["map"].value = this.renderTarget.texture;
+    this.material.uniforms["color"].value = new Color(color);
     this.material.uniforms["opacity"].value = opacity;
-    this.material.transparent = opacity < 1;
+    this.material.transparent = true;
+    this.material.depthWrite = false;
+    this.material.premultipliedAlpha = true;
 
     // blur materials
     this.horizontalBlurMaterial = new ShaderMaterial(HorizontalBlurShader);
@@ -122,6 +129,12 @@ export default class BlurredReflector extends Mesh {
   }
 
   onBeforeRender(renderer, scene, camera) {
+    if (!this.manualRender) {
+      this.render(renderer, scene, camera);
+    }
+  }
+
+  render(renderer, scene, camera) {
     this.reflectorWorldPosition.setFromMatrixPosition(this.matrixWorld);
     this.cameraWorldPosition.setFromMatrixPosition(camera.matrixWorld);
 
@@ -218,13 +231,14 @@ export default class BlurredReflector extends Mesh {
     this.visible = false;
     this.excluded.forEach((object) => (object.visible = false));
 
+    const currentBackground = scene.background;
     const currentRenderTarget = renderer.getRenderTarget();
     const currentXrEnabled = renderer.xr.enabled;
     const currentShadowAutoUpdate = renderer.shadowMap.autoUpdate;
 
+    scene.background = null;
     renderer.xr.enabled = false; // Avoid camera modification
     renderer.shadowMap.autoUpdate = false; // Avoid re-computing shadows
-
     renderer.setRenderTarget(this.renderTarget);
 
     // make sure the depth buffer is writable so it can be properly cleared, see #18897
@@ -245,15 +259,8 @@ export default class BlurredReflector extends Mesh {
 
     renderer.xr.enabled = currentXrEnabled;
     renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
-
+    scene.background = currentBackground;
     renderer.setRenderTarget(currentRenderTarget);
-
-    // Restore viewport
-    // const viewport = camera.viewport;
-
-    // if (viewport !== undefined) {
-    //   renderer.state.viewport(viewport);
-    // }
 
     this.excluded.forEach((object) => (object.visible = true));
     this.visible = true;
@@ -261,7 +268,7 @@ export default class BlurredReflector extends Mesh {
 
   blurReflector(renderer, blurAmount) {
     this.horizontalBlurMaterial.uniforms.tDiffuse.value = this.renderTarget.texture;
-    this.horizontalBlurMaterial.uniforms.h.value = (blurAmount * 1) / 256;
+    this.horizontalBlurMaterial.uniforms.h.value = (blurAmount * 1) / this.textureWidth;
     this.screen.material = this.horizontalBlurMaterial;
 
     renderer.setRenderTarget(this.renderTargetBlur);
@@ -273,7 +280,7 @@ export default class BlurredReflector extends Mesh {
     renderer.render(this.screenScene, this.screenCamera);
 
     this.verticalBlurMaterial.uniforms.tDiffuse.value = this.renderTargetBlur.texture;
-    this.verticalBlurMaterial.uniforms.v.value = (blurAmount * 1) / 256;
+    this.verticalBlurMaterial.uniforms.v.value = (blurAmount * 1) / this.textureHeight;
     this.screen.material = this.verticalBlurMaterial;
 
     renderer.setRenderTarget(this.renderTarget);

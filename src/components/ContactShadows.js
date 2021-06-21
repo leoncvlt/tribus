@@ -1,6 +1,5 @@
 import {
   CameraHelper,
-  Color,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -15,7 +14,7 @@ import { HorizontalBlurShader } from "three/examples/jsm/shaders/HorizontalBlurS
 import { VerticalBlurShader } from "three/examples/jsm/shaders/VerticalBlurShader";
 
 //from https://github.com/mrdoob/three.js/blob/master/examples/webgl_shadow_contact.html
-export default class ContactShadows extends Group {
+export default class ContactShadows extends Mesh {
   set opacity(value) {
     this.planeMaterial.opacity = value;
   }
@@ -23,26 +22,37 @@ export default class ContactShadows extends Group {
     return this.planeMaterial.opacity;
   }
 
+  set darkness(value) {
+    this._depthShader.uniforms.darkness.value = value;
+  }
+  get darkness() {
+    return this._depthShader?.uniforms.darkness.value || 1;
+  }
+
   constructor({
-    width = 10,
-    height = 10,
-    cameraHeight = 10,
-    blur = 8,
+    width = 16,
+    height = 16,
+    textureWidth = 512,
+    textureHeight = 512,
+    cameraHeight = 16,
     darkness = 1,
     opacity = 1,
-    planeColor = new Color(0xffffff),
-    planeOpacity = 1,
-    debugCamera = false,
-    fast = false,
+    blur = 4,
+    fastBlur = false,
+    manualRender = false,
   } = {}) {
     super();
-    this.blur = blur;
-    this.fast = fast;
 
-    this.renderTarget = new WebGLRenderTarget(512, 512);
+    this.textureWidth = textureWidth;
+    this.textureHeight = textureHeight;
+    this.blur = blur;
+    this.fastBlur = fastBlur;
+    this.manualRender = manualRender;
+
+    this.renderTarget = new WebGLRenderTarget(textureWidth, textureHeight);
     this.renderTarget.texture.generateMipmaps = false;
 
-    this.renderTargetBlur = new WebGLRenderTarget(512, 512);
+    this.renderTargetBlur = new WebGLRenderTarget(textureWidth, textureHeight);
     this.renderTargetBlur.texture.generateMipmaps = false;
 
     const planeGeometry = new PlaneGeometry(width, height).rotateX(Math.PI / 2);
@@ -53,23 +63,13 @@ export default class ContactShadows extends Group {
       depthWrite: false,
     });
     const plane = new Mesh(planeGeometry, this.planeMaterial);
-    plane.renderOrder = 1; // make sure it's rendered after the fillPlane
+    plane.renderOrder = 1; // make sure it's rendered after other geo
     plane.scale.y = -1; // the y from the texture is flipped!
     this.add(plane);
 
     this.blurPlane = new Mesh(planeGeometry);
     this.blurPlane.visible = false;
     this.add(this.blurPlane);
-
-    const fillPlaneMaterial = new MeshBasicMaterial({
-      color: planeColor,
-      opacity: planeOpacity,
-      transparent: planeOpacity < 1,
-      depthWrite: false,
-    });
-    const fillPlane = new Mesh(planeGeometry, fillPlaneMaterial);
-    fillPlane.rotateX(Math.PI);
-    this.add(fillPlane);
 
     this.shadowCamera = new OrthographicCamera(
       -width / 2,
@@ -82,14 +82,13 @@ export default class ContactShadows extends Group {
     this.shadowCamera.rotation.x = Math.PI / 2; // get the camera to look up
     this.add(this.shadowCamera);
 
-    this.cameraHelper = new CameraHelper(this.shadowCamera);
-    if (debugCamera) {
-      this.add(this.cameraHelper);
-    }
+    this.helpers = new Group();
+    const cameraHelper = new CameraHelper(this.shadowCamera);
+    this.helpers.add(cameraHelper);
 
     this.depthMaterial = new MeshDepthMaterial();
 
-    this.depthMaterial.onBeforeCompile = function (shader) {
+    this.depthMaterial.onBeforeCompile = (shader) => {
       shader.uniforms.darkness = { value: darkness };
       shader.fragmentShader = /* glsl */ `
 						uniform float darkness;
@@ -98,6 +97,7 @@ export default class ContactShadows extends Group {
               "gl_FragColor = vec4( vec3( 0.0 ), ( 1.0 - fragCoordZ ) * darkness );"
             )}
 					`;
+      this._depthShader = shader;
     };
 
     this.depthMaterial.depthTest = false;
@@ -116,7 +116,7 @@ export default class ContactShadows extends Group {
     // blur horizontally and draw in the renderTargetBlur
     this.blurPlane.material = this.horizontalBlurMaterial;
     this.blurPlane.material.uniforms.tDiffuse.value = this.renderTarget.texture;
-    this.horizontalBlurMaterial.uniforms.h.value = (blurAmount * 1) / 256;
+    this.horizontalBlurMaterial.uniforms.h.value = (blurAmount * 1) / this.textureWidth;
 
     renderer.setRenderTarget(this.renderTargetBlur);
     renderer.render(this.blurPlane, this.shadowCamera);
@@ -124,7 +124,7 @@ export default class ContactShadows extends Group {
     // blur vertically and draw in the main renderTarget
     this.blurPlane.material = this.verticalBlurMaterial;
     this.blurPlane.material.uniforms.tDiffuse.value = this.renderTargetBlur.texture;
-    this.verticalBlurMaterial.uniforms.v.value = (blurAmount * 1) / 256;
+    this.verticalBlurMaterial.uniforms.v.value = (blurAmount * 1) / this.textureHeight;
 
     renderer.setRenderTarget(this.renderTarget);
     renderer.render(this.blurPlane, this.shadowCamera);
@@ -132,13 +132,19 @@ export default class ContactShadows extends Group {
     this.blurPlane.visible = false;
   }
 
-  render(scene, renderer) {
+  onBeforeRender(renderer, scene, camera) {
+    if (!this.manualRender) {
+      this.render(renderer, scene);
+    }
+  }
+
+  render(renderer, scene) {
     // remove the background
     const initialBackground = scene.background;
     scene.background = null;
 
     // force the depthMaterial to everything
-    this.cameraHelper.visible = false;
+    this.helpers.visible = false;
     scene.overrideMaterial = this.depthMaterial;
 
     // render to the render target to get the depths
@@ -147,13 +153,13 @@ export default class ContactShadows extends Group {
 
     // and reset the override material
     scene.overrideMaterial = null;
-    this.cameraHelper.visible = true;
+    this.helpers.visible = true;
 
     this.blurShadow(renderer, this.blur);
 
     // a second pass to reduce the artifacts
     // (0.4 is the minimum blur amout so that the artifacts are gone)
-    if (!this.fast) {
+    if (!this.fastBlur) {
       this.blurShadow(renderer, this.blur * 0.4);
     }
 

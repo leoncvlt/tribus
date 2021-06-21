@@ -27,11 +27,16 @@ export default class Example {
     await this.start();
 
     this._params = {};
-    Object.entries(this.parameters).forEach(([name, { value, onChange, ...args }]) => {
-      this._params[name] = value;
-      const input = this.gui.addInput(this._params, name, args);
-      input.on("change", ({ value }) => onChange(value));
-    });
+    const parameterEntries = Object.entries(this.parameters);
+    if (parameterEntries.length) {
+      parameterEntries.forEach(([name, { value, onChange, ...args }]) => {
+        this._params[name] = value;
+        const input = this.gui.addInput(this._params, name, args);
+        input.on("change", ({ value }) => onChange(value));
+      });
+    } else {
+      this.gui.dispose();
+    }
 
     if (this.controls) {
       this.renderer.domElement.classList.add("controls");
