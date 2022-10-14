@@ -1,6 +1,32 @@
 import { Clock, Color, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+class Stats {
+  constructor() {
+    if (import.meta.env.DEV) {
+      import("stats.js").then((module) => {
+        this.stats = new module.default();
+        this.stats.showPanel(0);
+        this.stats.dom.style.top = null;
+        this.stats.dom.style.bottom = 0;
+        document.body.appendChild(this.stats.dom);
+      });
+    }
+  }
+
+  begin() {
+    if (import.meta.env.DEV) {
+      this.stats?.begin();
+    }
+  }
+
+  end() {
+    if (import.meta.env.DEV) {
+      this.stats?.end();
+    }
+  }
+}
+
 export default class Example {
   get parameters() {
     return {};
@@ -17,6 +43,7 @@ export default class Example {
     this.camera = new PerspectiveCamera();
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
+    this.stats = new Stats();
 
     this._start();
 
@@ -58,9 +85,15 @@ export default class Example {
 
     const delta = this.clock.getDelta();
     const elapsed = this.clock.getElapsedTime();
-    this.update && this.update(delta, elapsed);
+
+    this.stats.begin();
+    if (this.update) {
+      this.update(delta, elapsed);
+    }
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
+    this.stats.end();
+
     requestAnimationFrame(this._update.bind(this));
   }
 }

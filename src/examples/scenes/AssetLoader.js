@@ -78,13 +78,5 @@ export default class AssetLoaderExample extends Example {
     const statueEngel_C = AssetLoader.get("Engel_C");
     statueEngel_C.scene.position.set(0, 0, -8);
     this.scene.add(statueEngel_C.scene);
-
-    // const contactShadows = new ContactShadows({
-    //   width: 16,
-    //   height: 32,
-    //   blur: 4,
-    // });
-    // contactShadows.position.y = 0.01;
-    // this.scene.add(contactShadows)
   }
 }

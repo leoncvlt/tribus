@@ -55,7 +55,7 @@ export default class BlurredReflector extends Mesh {
     }
 
     this.type = "Reflector";
-    
+
     this.textureWidth = textureWidth;
     this.textureHeight = textureHeight;
     this.excluded = excluded;
@@ -235,11 +235,13 @@ export default class BlurredReflector extends Mesh {
     const currentRenderTarget = renderer.getRenderTarget();
     const currentXrEnabled = renderer.xr.enabled;
     const currentShadowAutoUpdate = renderer.shadowMap.autoUpdate;
+    const initialClearAlpha = renderer.getClearAlpha();
 
     scene.background = null;
     renderer.xr.enabled = false; // Avoid camera modification
     renderer.shadowMap.autoUpdate = false; // Avoid re-computing shadows
     renderer.setRenderTarget(this.renderTarget);
+    renderer.setClearAlpha(0);
 
     // make sure the depth buffer is writable so it can be properly cleared, see #18897
     renderer.state.buffers.depth.setMask(true);
@@ -261,6 +263,7 @@ export default class BlurredReflector extends Mesh {
     renderer.shadowMap.autoUpdate = currentShadowAutoUpdate;
     scene.background = currentBackground;
     renderer.setRenderTarget(currentRenderTarget);
+    renderer.setClearAlpha(initialClearAlpha);
 
     this.excluded.forEach((object) => (object.visible = true));
     this.visible = true;

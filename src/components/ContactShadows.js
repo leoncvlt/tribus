@@ -87,7 +87,6 @@ export default class ContactShadows extends Mesh {
     this.helpers.add(cameraHelper);
 
     this.depthMaterial = new MeshDepthMaterial();
-
     this.depthMaterial.onBeforeCompile = (shader) => {
       shader.uniforms.darkness = { value: darkness };
       shader.fragmentShader = /* glsl */ `
@@ -147,6 +146,10 @@ export default class ContactShadows extends Mesh {
     this.helpers.visible = false;
     scene.overrideMaterial = this.depthMaterial;
 
+    // set renderer clear alpha
+    const initialClearAlpha = renderer.getClearAlpha();
+		renderer.setClearAlpha( 0 );
+
     // render to the render target to get the depths
     renderer.setRenderTarget(this.renderTarget);
     renderer.render(scene, this.shadowCamera);
@@ -165,6 +168,7 @@ export default class ContactShadows extends Mesh {
 
     // reset and render the normal scene
     renderer.setRenderTarget(null);
+    renderer.setClearAlpha( initialClearAlpha );
     scene.background = initialBackground;
   }
 }

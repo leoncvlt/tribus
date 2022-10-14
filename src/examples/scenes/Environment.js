@@ -1,4 +1,4 @@
-import { Color, Mesh, MeshStandardMaterial, TorusGeometry } from "three";
+import { Color, Mesh, MeshStandardMaterial, TorusGeometry, TorusKnotGeometry } from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 
 import Environment from "../../components/Environment";
@@ -11,7 +11,7 @@ export default class EnvironmentExample extends Example {
     this.camera.position.z = 10;
 
     this.torus = new Mesh(
-      new TorusGeometry(1, 0.5, 16, 32),
+      new TorusKnotGeometry(1.25, 0.5, 128, 16),
       new MeshStandardMaterial({
         roughness: 0.4,
         metalness: 0.6,

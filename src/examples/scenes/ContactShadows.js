@@ -1,6 +1,7 @@
 import {
   IcosahedronGeometry,
   Mesh,
+  MeshBasicMaterial,
   MeshNormalMaterial,
   PlaneBufferGeometry,
   TorusKnotGeometry,
@@ -22,7 +23,7 @@ export default class ContactShadowsExample extends Example {
     this.icos.position.set(-2, 4, 2);
     this.scene.add(this.icos);
 
-    const ground = new Mesh(new PlaneBufferGeometry(32, 32), new MeshNormalMaterial());
+    const ground = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial());
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
 
