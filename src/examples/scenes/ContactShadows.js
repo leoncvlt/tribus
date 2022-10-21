@@ -8,7 +8,7 @@ import {
 } from "three";
 
 import ContactShadows from "../../components/ContactShadows";
-import Example from "./Example";
+import Example from "../Example";
 
 export default class ContactShadowsExample extends Example {
   start() {
@@ -23,7 +23,10 @@ export default class ContactShadowsExample extends Example {
     this.icos.position.set(-2, 4, 2);
     this.scene.add(this.icos);
 
-    const ground = new Mesh(new PlaneBufferGeometry(32, 32), new MeshBasicMaterial());
+    const ground = new Mesh(
+      new PlaneBufferGeometry(32, 32),
+      new MeshBasicMaterial()
+    );
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
 

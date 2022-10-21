@@ -1,8 +1,14 @@
-import { Color, Mesh, MeshStandardMaterial, TorusGeometry, TorusKnotGeometry } from "three";
+import {
+  Color,
+  Mesh,
+  MeshStandardMaterial,
+  TorusGeometry,
+  TorusKnotGeometry,
+} from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 
 import Environment from "../../components/Environment";
-import Example from "./Example";
+import Example from "../Example";
 
 import envmap from "../assets/venice_sunset_1k.hdr?url";
 
@@ -46,7 +52,9 @@ export default class EnvironmentExample extends Example {
         label: "Set background",
         value: !(this.scene.background instanceof Color),
         onChange: (value) =>
-          (this.scene.background = value ? this.scene.environment : this.defaultBackground),
+          (this.scene.background = value
+            ? this.scene.environment
+            : this.defaultBackground),
       },
     };
   }

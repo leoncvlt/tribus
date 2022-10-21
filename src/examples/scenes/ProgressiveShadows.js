@@ -9,7 +9,7 @@ import {
 } from "three";
 
 import ProgressiveShadows from "../../components/ProgressiveShadows";
-import Example from "./Example";
+import Example from "../Example";
 
 export default class ProgressiveShadowsExample extends Example {
   start() {
@@ -17,7 +17,10 @@ export default class ProgressiveShadowsExample extends Example {
     this.controls.target.set(0, 2, 0);
     this.renderer.shadowMap.enabled = true;
 
-    const torus = new Mesh(new TorusKnotGeometry(2, 0.75, 128, 24), new MeshPhongMaterial());
+    const torus = new Mesh(
+      new TorusKnotGeometry(2, 0.75, 128, 24),
+      new MeshPhongMaterial()
+    );
     torus.position.set(2, 4, -2);
     torus.castShadow = true;
     torus.receiveShadow = true;
@@ -29,7 +32,10 @@ export default class ProgressiveShadowsExample extends Example {
     icos.receiveShadow = true;
     this.scene.add(icos);
 
-    const ground = new Mesh(new PlaneBufferGeometry(32, 32), new MeshPhongMaterial());
+    const ground = new Mesh(
+      new PlaneBufferGeometry(32, 32),
+      new MeshPhongMaterial()
+    );
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
 

@@ -1,18 +1,12 @@
 import "./styles.css";
 
-import EnvironmentExample from "./scenes/Environment";
-import ContactShadowsExample from "./scenes/ContactShadows";
-import BlurredReflectorExample from "./scenes/BlurredReflector";
-import ProgressiveShadowsExample from "./scenes/ProgressiveShadows";
-import AssetLoaderExample from "./scenes/AssetLoader";
-
-const examples = {
-  BlurredReflectorExample,
-  ContactShadowsExample,
-  EnvironmentExample,
-  ProgressiveShadowsExample,
-  AssetLoaderExample,
-};
+const scenes = import.meta.glob("./scenes/*.js", { eager: true });
+const examples = Object.fromEntries(
+  Object.entries(scenes).map(([path, example]) => [
+    path.split("/").pop().replace(".js", ""),
+    example.default,
+  ])
+);
 
 const example = window.location.hash.replace("#", "");
 const state = { example };
@@ -30,7 +24,7 @@ exampleInput.on("change", (e) => {
   window.location.reload();
 });
 
-if (state.example) {
+if (state.example && state.example in examples) {
   const exampleParameters = gui.addFolder({
     title: "Parameters",
   });

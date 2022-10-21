@@ -1,8 +1,14 @@
-import { Fog, Mesh, MeshStandardMaterial, PlaneBufferGeometry, sRGBEncoding } from "three";
+import {
+  Fog,
+  Mesh,
+  MeshStandardMaterial,
+  PlaneBufferGeometry,
+  sRGBEncoding,
+} from "three";
 
 import AssetLoader from "../../components/AssetLoader";
 import Environment from "../../components/Environment";
-import Example from "./Example";
+import Example from "../Example";
 
 import Loewe_C_url from "../assets/Loewe_C.glb?url";
 import Pferdestatue_C_url from "../assets/Pferdestatue_C.glb?url";
@@ -22,7 +28,10 @@ export default class AssetLoaderExample extends Example {
     this.camera.position.set(-20, 5, 0);
     this.controls.target.set(0, 5, 0);
 
-    const ground = new Mesh(new PlaneBufferGeometry(128, 128), new MeshStandardMaterial());
+    const ground = new Mesh(
+      new PlaneBufferGeometry(128, 128),
+      new MeshStandardMaterial()
+    );
     ground.rotation.x = -Math.PI / 2;
     this.scene.add(ground);
 
