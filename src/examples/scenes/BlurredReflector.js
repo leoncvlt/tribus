@@ -7,7 +7,7 @@ import {
 } from "three";
 
 import BlurredReflector from "../../components/BlurredReflector";
-import Example from "./Example";
+import Example from "../Example";
 
 export default class BlurredReflectorExample extends Example {
   start() {
@@ -23,7 +23,10 @@ export default class BlurredReflectorExample extends Example {
 
     const groundGeometry = new PlaneBufferGeometry(32, 32);
 
-    const floor = new Mesh(groundGeometry, new MeshNormalMaterial({ depthWrite: false }));
+    const floor = new Mesh(
+      groundGeometry,
+      new MeshNormalMaterial({ depthWrite: false })
+    );
     floor.rotateX(-Math.PI / 2);
     this.scene.add(floor);
 

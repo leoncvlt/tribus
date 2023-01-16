@@ -51,7 +51,9 @@ export default class Example {
   }
 
   async _start() {
-    await this.start();
+    if (this.start) {
+      await this.start();
+    }
 
     this._params = {};
     const parameterEntries = Object.entries(this.parameters);
