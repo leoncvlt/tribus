@@ -8,8 +8,9 @@ const rnd = (min, max) => Math.random() * (max - min) + min;
 export default class GPURaycasterExample extends Example {
   start() {
     this.camera.position.z = 10;
-    const raycaster = new GPURaycaster(this.camera, this.renderer);
     this.boxes = [];
+
+    const raycaster = new GPURaycaster(this.camera, this.renderer);
 
     for (let i = 0; i < 100; i++) {
       const box = new Mesh(
